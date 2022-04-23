@@ -125,7 +125,12 @@ module.exports = configure(function (/* ctx */) {
       // extendSSRWebserverConf (esbuildConf) {},
       // extendPackageJson (json) {},
 
-      pwa: false,
+      pwa: {
+        manifest: {
+          display: 'fullscreen',
+          orientation: 'landscape',
+        },
+      },
 
       // manualStoreHydration: true,
       // manualPostHydrationTrigger: true,
