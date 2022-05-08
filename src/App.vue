@@ -16,6 +16,7 @@
 <script lang="ts">
 import { useQuasar } from 'quasar';
 import { defineComponent, ref } from 'vue';
+import NoSleep from 'nosleep.js';
 
 export default defineComponent({
   name: 'App',
@@ -24,14 +25,18 @@ export default defineComponent({
     const $q = useQuasar();
 
     function handleStart() {
+      const noSleep = new NoSleep();
+
       // Requesting fullscreen mode:
       $q.fullscreen
         .request()
         .then(() => {
           hasStarted.value = true;
+          noSleep.enable();
         })
         .catch((err) => {
           console.log(err);
+          noSleep.disable;
         });
     }
 
