@@ -1,45 +1,63 @@
 <template>
   <q-carousel
+    v-if="photos.length > 0"
     animated
     v-model="slide"
     infinite
-    :autoplay="autoplay"
+    :autoplay="speedMs"
     height="100vh"
     :swipeable="true"
     transition-prev="slide-right"
     transition-next="slide-left"
-    @mouseenter="autoplay = false"
-    @mouseleave="autoplay = true"
+    @mouseenter="speedMs = false"
+    @mouseleave="speedMs = 600_000"
   >
     <q-carousel-slide
-      :name="1"
-      img-src="https://cdn.quasar.dev/img/mountains.jpg"
-    />
-    <q-carousel-slide
-      :name="2"
-      img-src="https://cdn.quasar.dev/img/parallax1.jpg"
-    />
-    <q-carousel-slide
-      :name="3"
-      img-src="https://cdn.quasar.dev/img/parallax2.jpg"
-    />
-    <q-carousel-slide
-      :name="4"
-      img-src="https://cdn.quasar.dev/img/quasar.jpg"
+      v-for="photo in photos"
+      :key="photo.asset_id"
+      :name="Number(photo.context.custom.index)"
+      :img-src="photo.secure_url"
     />
   </q-carousel>
 </template>
 
 <script lang="ts">
-// import { Todo, Meta } from 'components/models';
-// import ExampleComponent from 'components/ExampleComponent.vue';
-import { defineComponent, ref } from 'vue';
+import { Image, RequestResponse } from 'src/assets/responses.types';
+import { defineComponent, ref, watchEffect } from 'vue';
+import { useFetch } from '@vueuse/core';
 
 export default defineComponent({
   setup() {
+    const slide = ref(0);
+    const speedMs = ref<number | boolean>(600_000); // Every Ten minutes
+    const refetchTimeout = 60_000; // Each Minute
+    const photos = ref<Image[]>([]);
+
+    async function fetchPhotos(): Promise<void> {
+      const { data } = await useFetch(
+        'https://photoframe-admin.netlify.app/.netlify/functions/fetch-photos'
+      ).json<RequestResponse>();
+
+      watchEffect(() => {
+        if (data) {
+          photos.value =
+            data.value?.resources.sort(
+              (a, b) =>
+                Number(a.context.custom.index) - Number(b.context.custom.index)
+            ) || [];
+        }
+        console.log({ photos: photos.value });
+      });
+    }
+
+    //Every minute refresh photo list
+    setInterval(fetchPhotos, refetchTimeout);
+    fetchPhotos();
+
     return {
-      slide: ref(1),
-      autoplay: ref(true),
+      slide,
+      photos,
+      speedMs,
     };
   },
 });
